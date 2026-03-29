@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "402349873856",
+    "firebase_url": "https://ipp-databas-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "ipp-databas",
+    "storage_bucket": "ipp-databas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:402349873856:android:9c3e32dcd2de5681b6ab25",
+        "android_client_info": {
+          "package_name": "com.example.app_ipp"
+        }
+      },
+      "oauth_client": [ 
+        {
+          "client_id": "402349873856-doodqnig5lgdrpi97u6ccijeqhgqgkrl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMIWDurP4Aw-6_ax4OtXYRx3SVC-EsEf8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [ 
+            {
+              "client_id": "402349873856-doodqnig5lgdrpi97u6ccijeqhgqgkrl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "402349873856-b3frpnnq0ab7tu0ls0dplje4t5bchnm6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ippApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
