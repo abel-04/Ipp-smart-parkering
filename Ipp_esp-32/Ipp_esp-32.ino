@@ -2,8 +2,8 @@
 #include <Firebase_ESP_Client.h>
 
 // ===== WIFI =====
-#define WIFI_SSID "Abels_iphone"
-#define WIFI_PASSWORD "12345789"
+#define WIFI_SSID "iPhone"
+#define WIFI_PASSWORD "123457895"
 
 // ===== FIREBASE =====
 #define API_KEY "AIzaSyAMIWDurP4Aw-6_ax4OtXYRx3SVC-EsEf8"
@@ -29,6 +29,12 @@ void setup() {
   // WiFi anslutning
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Ansluter till WiFi");
+
+  while (WiFi.status() != WL_CONNECTED) {
+  delay(500);
+  Serial.print("Status: ");
+  Serial.println(WiFi.status()); 
+}
 
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
@@ -66,7 +72,7 @@ void loop() {
 
   digitalWrite(TRIG_PIN, LOW);
 
-  duration = pulseIn(ECHO_PIN, HIGH);
+  duration = pulseIn(ECHO_PIN, HIGH, 25000);
   distance = duration * 0.034 / 2;
 
   Serial.print("Distance: ");
