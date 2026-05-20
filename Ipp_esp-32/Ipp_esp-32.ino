@@ -20,38 +20,36 @@ FirebaseConfig config;
 long duration;
 float distance;
 
+// ===== NYA VARIABLER FÖR TIMERN =====
+unsigned long objectDetectedTime = 0; // Sparar tidpunkten då något först dök upp
+bool objectWasPresent = false;        // Håller koll på om det stod något där förra mätningen
+String currentStatus = "free";        
+
 void setup() {
   Serial.begin(115200);
 
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
-  // WiFi anslutning
+  // WiFi anslutning 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Ansluter till WiFi");
 
   while (WiFi.status() != WL_CONNECTED) {
-  delay(500);
-  Serial.print("Status: ");
-  Serial.println(WiFi.status()); 
-}
-
-  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
     Serial.print(".");
-    delay(300);
   }
   
   Serial.println();
   Serial.print("IP-adress: ");
   Serial.println(WiFi.localIP());
-
-  Serial.println("\nWiFi ansluten ✅");
+  Serial.println("WiFi ansluten ✅");
 
   // Firebase setup
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
 
-    if (Firebase.signUp(&config, &auth, "", "")) {
+  if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("Firebase signup OK");
   } else {
     Serial.printf("Signup error: %s\n", config.signer.signupError.message.c_str());
@@ -62,41 +60,64 @@ void setup() {
 }
 
 void loop() {
-
   // === Mät avstånd ===
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
-
   digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
-
   digitalWrite(TRIG_PIN, LOW);
 
   duration = pulseIn(ECHO_PIN, HIGH, 25000);
   distance = duration * 0.034 / 2;
 
+  // Om sensorn tappar kontakten eller visar 0, sätt ett högt värde så det inte misstolkas som nära
+  if (distance == 0) {
+    distance = 999;
+  }
+
   Serial.print("Distance: ");
   Serial.print(distance);
   Serial.println(" cm");
 
-  // === Avgör status ===
-  String status;
+  // === Logik för 45 cm och 2 sekunders fördröjning ===
+  String nextStatus = currentStatus; // Utgå från att statusen är oförändrad
 
-  if (distance < 50) {
-    status = "occupied";
-    Serial.println("🚗 UPPTAGEN");
+  if (distance <= 45) {
+    // Något är framför sensorn!
+    if (!objectWasPresent) {
+      // Det här är första gången vi ser föremålet. Starta timern!
+      objectDetectedTime = millis(); 
+      objectWasPresent = true;
+      Serial.println("⏳ Föremål upptäckt... väntar 2 sekunder för att bekräfta.");
+    } else {
+      // Föremålet stod här redan förra loopen. Kolla om det har gått 2 sekunder (2000 ms).
+      if (millis() - objectDetectedTime >= 2000) {
+        nextStatus = "occupied";
+      }
+    }
   } else {
-    status = "free";
-    Serial.println("🟢 LEDIG");
+    // Inget är framför sensorn (eller så försvann det)
+    objectWasPresent = false;
+    nextStatus = "free";
   }
 
-  // === Skicka till Firebase ===
-  if (Firebase.RTDB.setString(&fbdo, "parking/spot1/status", status)) {
-    Serial.println("Data skickad ✅");
-  } else {
-    Serial.println("Fel:");
-    Serial.println(fbdo.errorReason());
+  // === Skicka till Firebase ENBART om statusen faktiskt har ändrats ===
+  if (nextStatus != currentStatus) {
+    currentStatus = nextStatus; // Uppdatera vår lokala status
+
+    if (currentStatus == "occupied") {
+      Serial.println("🚗 UPPTAGEN (Bekräftat)");
+    } else {
+      Serial.println("🟢 LEDIG");
+    }
+
+    if (Firebase.RTDB.setString(&fbdo, "parking/spot1/status", currentStatus)) {
+      Serial.println("Data skickad till Firebase ✅");
+    } else {
+      Serial.print("Fel vid sändning: ");
+      Serial.println(fbdo.errorReason());
+    }
   }
 
-  delay(5000); // uppdatera var 5:e sekund
+  delay(200); // Vi kör loopen oftare (5 gånger i sekunden) för att timern ska vara exakt!
 }
